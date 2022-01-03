@@ -2,6 +2,8 @@ name: Deploy to development
 
 on:
   push:
+    branches:
+    - "**"
   workflow_dispatch:
   repository_dispatch:
 
