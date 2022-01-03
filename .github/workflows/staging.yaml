@@ -8,13 +8,6 @@ on:
 jobs:
   build:
     uses: au2001/gitops-demo-app/.github/workflows/build.yml@main
-
-  deploy:
-    needs: build
-    uses: au2001/gitops-demo-app/.github/workflows/deploy.yml@main
+    environment: staging
     with:
-      version: ${{ needs.build.outputs.version }}
-      app: demo-app
-      env: staging
-    secrets:
-      token: ${{ secrets.GITOPS_CONFIG_REPO_PAT }}
+      prefix: stg-

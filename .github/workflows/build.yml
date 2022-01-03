@@ -3,17 +3,20 @@ name: Build Docker image
 on:
   workflow_call:
     inputs:
+      prefix:
+        required: true
+        type: string
       image:
         required: false
         type: string
-      tag:
+      version:
         required: false
         type: string
     outputs:
-      sha_short:
-        value: ${{ jobs.build.outputs.sha_short }}
       version:
         value: ${{ jobs.build.outputs.version }}
+      version_full:
+        value: ${{ jobs.build.outputs.version_full }}
       image_name:
         value: ${{ jobs.build.outputs.image_name }}
       image_url:
@@ -23,19 +26,25 @@ on:
 
   workflow_dispatch:
     inputs:
+      prefix:
+        required: true
+        type: string
       image:
         required: false
         type: string
-      tag:
+      version:
         required: false
         type: string
 
   repository_dispatch:
     inputs:
+      prefix:
+        required: true
+        type: string
       image:
         required: false
         type: string
-      tag:
+      version:
         required: false
         type: string
 
@@ -47,8 +56,8 @@ jobs:
     name: Build and publish Docker image to registry
     runs-on: ubuntu-latest
     outputs:
-      sha_short: ${{ steps.vars.outputs.sha_short }}
       version: ${{ steps.vars.outputs.version }}
+      version_full: ${{ steps.vars.outputs.version_full }}
       image_name: ${{ steps.vars.outputs.image_name }}
       image_url: ${{ steps.vars.outputs.image_url }}
       image_full: ${{ steps.vars.outputs.image_full }}
@@ -60,18 +69,22 @@ jobs:
     - name: Compute variables
       id: vars
       run: |
-        sha_short=`git rev-parse --short HEAD`
-        version="$sha_short"
-        if [ ! -z "${{ inputs.tag }}" ]; then
-          version="${{ inputs.tag }}"
+        if [ -z "${{ inputs.version }}" ]; then
+          branch=`git branch --show-current`
+          sha_short=`git rev-parse --short HEAD`
+          version="$branch-$sha_short"
+        else
+          version="${{ inputs.version }}"
         fi
+
+        version_full="${{ inputs.prefix }}$(date +%s)-$version"
 
         image_name="${{ inputs.image || github.repository }}"
         image_url="${{ env.CONTAINER_REGISTRY }}/${{ inputs.image || github.repository }}"
-        image_full="$image_url:$version"
+        image_full="$image_url:$version_full"
 
-        echo "::set-output name=sha_short::$sha_short"
         echo "::set-output name=version::$version"
+        echo "::set-output name=version_full::$version_full"
         echo "::set-output name=image_name::$image_name"
         echo "::set-output name=image_url::$image_url"
         echo "::set-output name=image_full::$image_full"
@@ -83,23 +96,11 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and push untagged image
+    - name: Build and push image
       uses: docker/build-push-action@v2
-      if: ${{ inputs.tag == null }}
       with:
         push: true
         tags: |
-          ${{ steps.vars.outputs.image_url }}:latest
-          ${{ steps.vars.outputs.image_url }}:${{ steps.vars.outputs.sha_short }}
-          ${{ steps.vars.outputs.image_url }}:${{ github.sha }}
-
-    - name: Build and push tagged image
-      uses: docker/build-push-action@v2
-      if: ${{ inputs.tag != null }}
-      with:
-        push: true
-        tags: |
-          ${{ steps.vars.outputs.image_url }}:latest
-          ${{ steps.vars.outputs.image_url }}:${{ steps.vars.outputs.sha_short }}
-          ${{ steps.vars.outputs.image_url }}:${{ github.sha }}
-          ${{ steps.vars.outputs.image_url }}:${{ inputs.tag }}
+          ${{ steps.vars.outputs.image_url }}:${{ inputs.prefix }}latest
+          ${{ steps.vars.outputs.image_url }}:commit-${{ github.sha }}
+          ${{ steps.vars.outputs.image_full }}

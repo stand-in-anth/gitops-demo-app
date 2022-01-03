@@ -7,13 +7,13 @@ on:
 
   workflow_dispatch:
     inputs:
-      tag:
+      version:
         required: false
         type: string
 
   repository_dispatch:
     inputs:
-      tag:
+      version:
         required: false
         type: string
 
@@ -22,31 +22,26 @@ jobs:
     name: Prepare deployment
     runs-on: ubuntu-latest
     outputs:
-      tag: ${{ steps.vars.outputs.tag }}
+      version: ${{ steps.vars.outputs.version }}
 
     steps:
     - name: Compute variables
       id: vars
       run: |
-        tag="${{ inputs.tag }}"
-        if [[ $GITHUB_REF == refs/tags/v* ]]; then
-          tag=${GITHUB_REF/refs\/tags\//}
+        if [[ ! -z "${{ inputs.version }}" ]]; then
+          version="${{ inputs.version }}"
+        elif [[ $GITHUB_REF == refs/tags/* ]]; then
+          version=${GITHUB_REF/refs\/tags\//}
+        else
+          version=${GITHUB_BASE_REF:-${GITHUB_REF#refs/*/}}
         fi
-        echo ::set-output name=tag::$tag
+
+        echo ::set-output name=version::$version
 
   build:
     needs: prepare
     uses: au2001/gitops-demo-app/.github/workflows/build.yml@main
+    environment: production
     with:
-      tag: ${{ needs.prepare.outputs.tag }}
-
-  deploy:
-    needs: build
-    uses: au2001/gitops-demo-app/.github/workflows/deploy.yml@main
-    with:
-      version: ${{ needs.build.outputs.version }}
-      app: demo-app
-      env: production
-      pr: true
-    secrets:
-      token: ${{ secrets.GITOPS_CONFIG_REPO_PAT }}
+      version: ${{ needs.prepare.outputs.version }}
+      prefix: prd-
