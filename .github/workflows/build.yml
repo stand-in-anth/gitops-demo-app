@@ -62,6 +62,8 @@ on:
 env:
   CONTAINER_REGISTRY: ghcr.io
 
+concurrency: build
+
 jobs:
   prepare:
     name: Prepare build
@@ -106,7 +108,6 @@ jobs:
     name: Re-tag existing Docker image
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
-    concurrency: build
 
     outputs:
       failed: ${{ steps.retag.outcome != 'success' }}
@@ -137,7 +138,6 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.retag.outputs.failed
     environment: ${{ inputs.environment }}
-    concurrency: build
 
     steps:
     - name: Test
