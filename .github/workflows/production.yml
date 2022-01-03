@@ -17,6 +17,10 @@ on:
         required: false
         type: string
 
+concurrency: 
+  group: production
+  cancel-in-progress: true
+
 jobs:
   prepare:
     name: Prepare deployment
@@ -41,7 +45,7 @@ jobs:
   build:
     needs: prepare
     uses: au2001/gitops-demo-app/.github/workflows/build.yml@main
-    environment: production
     with:
-      version: ${{ needs.prepare.outputs.version }}
       prefix: prd-
+      version: ${{ needs.prepare.outputs.version }}
+      environment: Production

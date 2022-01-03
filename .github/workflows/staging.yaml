@@ -5,9 +5,13 @@ on:
   workflow_dispatch:
   repository_dispatch:
 
+concurrency: 
+  group: staging
+  cancel-in-progress: true
+
 jobs:
   build:
     uses: au2001/gitops-demo-app/.github/workflows/build.yml@main
-    environment: staging
     with:
       prefix: stg-
+      environment: Staging
