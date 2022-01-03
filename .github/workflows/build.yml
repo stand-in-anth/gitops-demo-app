@@ -129,11 +129,6 @@ jobs:
           ${{ needs.prepare.outputs.image_url }}:${{ inputs.prefix }}latest
           ${{ needs.prepare.outputs.image_full }}
 
-    - name: Test
-      run: |
-        echo "${{ steps.retag.conclusion }}"
-        echo "${{ steps.retag.outcome }}"
-
   build:
     needs:
     - prepare
@@ -145,6 +140,10 @@ jobs:
     concurrency: build
 
     steps:
+    - name: Test
+      run: |
+        echo "${{ toJSON(needs.retag) }}"
+
     - name: Checkout
       uses: actions/checkout@v2
 
