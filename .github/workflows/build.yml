@@ -110,7 +110,7 @@ jobs:
     environment: ${{ inputs.environment }}
 
     outputs:
-      outcome: ${{ steps.push.outcome }}
+      status: ${{ steps.check.outputs.status }}
 
     steps:
     - name: Login to GitHub Container Registry
@@ -130,20 +130,21 @@ jobs:
           ${{ needs.prepare.outputs.image_url }}:${{ inputs.prefix }}latest
           ${{ needs.prepare.outputs.image_full }}
 
+    - name: Check if push succeeded
+      id: check
+      run: |
+        echo "::set-output name=status::${{ steps.push.outcome }}"
+
   build:
     needs:
     - prepare
     - retag
     name: Build and publish Docker image to registry
     runs-on: ubuntu-latest
-    if: needs.retag.outputs.outcome != 'success'
+    if: needs.retag.outputs.status != 'success'
     environment: ${{ inputs.environment }}
 
     steps:
-    - name: Test
-      run: |
-        echo "${{ toJSON(needs.retag) }}"
-
     - name: Checkout
       uses: actions/checkout@v2
 
