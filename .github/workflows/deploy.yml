@@ -1,0 +1,159 @@
+name: Build & Deploy version
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      app:
+        required: true
+        type: string
+      env:
+        required: true
+        type: string
+      pr:
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      token:
+        required: true
+
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+      app:
+        required: true
+        type: string
+      env:
+        required: true
+        type: string
+      pr:
+        required: false
+        type: boolean
+        default: false
+
+  repository_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+      app:
+        required: true
+        type: string
+      env:
+        required: true
+        type: string
+      pr:
+        required: false
+        type: boolean
+        default: false
+
+env:
+  CONFIG_MAPS_REPO_ORG: au2001
+  CONFIG_MAPS_REPO_NAME: gitops-demo
+  CONFIG_MAPS_BRANCH: config-maps
+
+jobs:
+  deploy:
+    name: Push version update to Git
+    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.vars.outputs.branch }}
+      committed: ${{ steps.commit.outputs.committed == 'true' }}
+
+    steps:
+    - name: Compute variables
+      id: vars
+      run: |
+        branch="$CONFIG_MAPS_BRANCH"
+        if [ "${{ inputs.pr }}" = "true" ]; then
+          branch="${{ inputs.app }}-update"
+        fi
+        echo ::set-output name=branch::$branch
+
+    - name: Checkout config repo
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ env.CONFIG_MAPS_REPO_ORG }}/${{ env.CONFIG_MAPS_REPO_NAME }}
+        ref: ${{ env.CONFIG_MAPS_BRANCH }}
+        token: ${{ secrets.token }}
+
+    - name: Pull unmerged changes
+      if: inputs.pr
+      continue-on-error: true
+      run: |
+        git fetch `git remote` ${{ steps.vars.outputs.branch }}
+        git checkout `git remote`/${{ steps.vars.outputs.branch }}
+
+    - name: Update config
+      run: |
+        sed -i "s|^\(\s*APP_VERSION:\).*$|\1 ${{ inputs.version }}|" ./${{ inputs.env }}/${{ inputs.app }}/version-map.yaml
+
+    - name: Commit changes
+      id: commit
+      uses: EndBug/add-and-commit@v7
+      with:
+        branch: ${{ steps.vars.outputs.branch }}
+        branch_mode: ${{ inputs.pr && 'create' || 'throw' }}
+        message: |
+          Update ${{ inputs.app }} to ${{ inputs.version }}
+
+          Environment: ${{ inputs.env }}
+        default_author: github_actions
+
+  pull_request:
+    needs: deploy
+    if: inputs.pr && needs.deploy.outputs.committed
+    name: Create pull request for version
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout config repo
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ env.CONFIG_MAPS_REPO_ORG }}/${{ env.CONFIG_MAPS_REPO_NAME }}
+        ref: ${{ needs.deploy.outputs.branch }}
+        token: ${{ secrets.token }}
+
+    - name: Create pull request
+      id: create_pr
+      uses: repo-sync/pull-request@v2
+      with:
+        source_branch: ${{ needs.deploy.outputs.branch }}
+        destination_branch: ${{ env.CONFIG_MAPS_BRANCH }}
+        pr_title: Update ${{ inputs.app }} to ${{ inputs.version }}
+        pr_body: Changes the ${{ inputs.app }} container image to version ${{ inputs.version }} for environment ${{ inputs.env }}
+        pr_label: auto-update
+        pr_assignee: ${{ github.actor }}
+        github_token: ${{ secrets.token }}
+
+    - name: Fetch existing request
+      id: get_pr
+      uses: octokit/request-action@v2.x
+      if: steps.create_pr.outputs.pr_number == ''
+      with:
+        route: GET /repos/{owner}/{repo}/pulls
+        owner: ${{ env.CONFIG_MAPS_REPO_ORG }}
+        repo: ${{ env.CONFIG_MAPS_REPO_NAME }}
+        base: ${{ env.CONFIG_MAPS_BRANCH }}
+        head: ${{ needs.deploy.outputs.branch }}
+        per_page: 1
+      env:
+        GITHUB_TOKEN: ${{ secrets.token }}
+
+    - name: Update existing pull request
+      uses: octokit/request-action@v2.x
+      if: steps.create_pr.outputs.pr_number == ''
+      with:
+          route: PATCH /repos/{owner}/{repo}/pulls/{pull_number}
+          owner: ${{ env.CONFIG_MAPS_REPO_ORG }}
+          repo: ${{ env.CONFIG_MAPS_REPO_NAME }}
+          pull_number: ${{ fromJson(steps.get_pr.outputs.data)[0].number }}
+          title: Update ${{ inputs.app }} to ${{ inputs.version }}
+          body: Changes the ${{ inputs.app }} container image to version ${{ inputs.version }} for environment ${{ inputs.env }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.token }}

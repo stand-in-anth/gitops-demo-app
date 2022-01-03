@@ -1,0 +1,105 @@
+name: Build Docker image
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        required: false
+        type: string
+      tag:
+        required: false
+        type: string
+    outputs:
+      sha_short:
+        value: ${{ jobs.build.outputs.sha_short }}
+      version:
+        value: ${{ jobs.build.outputs.version }}
+      image_name:
+        value: ${{ jobs.build.outputs.image_name }}
+      image_url:
+        value: ${{ jobs.build.outputs.image_url }}
+      image_full:
+        value: ${{ jobs.build.outputs.image_full }}
+
+  workflow_dispatch:
+    inputs:
+      image:
+        required: false
+        type: string
+      tag:
+        required: false
+        type: string
+
+  repository_dispatch:
+    inputs:
+      image:
+        required: false
+        type: string
+      tag:
+        required: false
+        type: string
+
+env:
+  CONTAINER_REGISTRY: ghcr.io
+
+jobs:
+  build:
+    name: Build and publish Docker image to registry
+    runs-on: ubuntu-latest
+    outputs:
+      sha_short: ${{ steps.vars.outputs.sha_short }}
+      version: ${{ steps.vars.outputs.version }}
+      image_name: ${{ steps.vars.outputs.image_name }}
+      image_url: ${{ steps.vars.outputs.image_url }}
+      image_full: ${{ steps.vars.outputs.image_full }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Compute variables
+      id: vars
+      run: |
+        sha_short=`git rev-parse --short HEAD`
+        version="$sha_short"
+        if [ ! -z "${{ inputs.tag }}" ]; then
+          version="${{ inputs.tag }}"
+        fi
+
+        image_name="${{ inputs.image || github.repository }}"
+        image_url="${{ env.CONTAINER_REGISTRY }}/${{ inputs.image || github.repository }}"
+        image_full="$image_url:$version"
+
+        echo "::set-output name=sha_short::$sha_short"
+        echo "::set-output name=version::$version"
+        echo "::set-output name=image_name::$image_name"
+        echo "::set-output name=image_url::$image_url"
+        echo "::set-output name=image_full::$image_full"
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ${{ env.CONTAINER_REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push untagged image
+      uses: docker/build-push-action@v2
+      if: ${{ inputs.tag == null }}
+      with:
+        push: true
+        tags: |
+          ${{ steps.vars.outputs.image_url }}:latest
+          ${{ steps.vars.outputs.image_url }}:${{ steps.vars.outputs.sha_short }}
+          ${{ steps.vars.outputs.image_url }}:${{ github.sha }}
+
+    - name: Build and push tagged image
+      uses: docker/build-push-action@v2
+      if: ${{ inputs.tag != null }}
+      with:
+        push: true
+        tags: |
+          ${{ steps.vars.outputs.image_url }}:latest
+          ${{ steps.vars.outputs.image_url }}:${{ steps.vars.outputs.sha_short }}
+          ${{ steps.vars.outputs.image_url }}:${{ github.sha }}
+          ${{ steps.vars.outputs.image_url }}:${{ inputs.tag }}

@@ -1,0 +1,52 @@
+name: Build & Deploy to production
+
+on:
+  push:
+    tags:
+    - v*
+
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: false
+        type: string
+
+  repository_dispatch:
+    inputs:
+      tag:
+        required: false
+        type: string
+
+jobs:
+  prepare:
+    name: Prepare deployment
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.vars.outputs.tag }}
+
+    steps:
+    - name: Compute variables
+      id: vars
+      run: |
+        tag="${{ inputs.tag }}"
+        if [[ $GITHUB_REF == refs/tags/v* ]]; then
+          tag=${GITHUB_REF/refs\/tags\//}
+        fi
+        echo ::set-output name=tag::$tag
+
+  build:
+    needs: prepare
+    uses: au2001/gitops-demo-app/.github/workflows/build.yml@main
+    with:
+      tag: ${{ needs.prepare.outputs.tag }}
+
+  deploy:
+    needs: build
+    uses: au2001/gitops-demo-app/.github/workflows/deploy.yml@main
+    with:
+      version: ${{ needs.build.outputs.version }}
+      app: demo-app
+      env: production
+      pr: true
+    secrets:
+      token: ${{ secrets.GITOPS_CONFIG_REPO_PAT }}
