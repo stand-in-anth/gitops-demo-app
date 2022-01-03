@@ -110,7 +110,7 @@ jobs:
     environment: ${{ inputs.environment }}
 
     outputs:
-      status: ${{ steps.check.outputs.status }}
+      status: ${{ steps.push.outcome }}
 
     steps:
     - name: Login to GitHub Container Registry
@@ -129,11 +129,6 @@ jobs:
         dst: |
           ${{ needs.prepare.outputs.image_url }}:${{ inputs.prefix }}latest
           ${{ needs.prepare.outputs.image_full }}
-
-    - name: Check if push succeeded
-      id: check
-      run: |
-        echo "::set-output name=status::${{ steps.push.outcome }}"
 
   build:
     needs:
