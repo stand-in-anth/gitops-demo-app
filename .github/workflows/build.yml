@@ -26,6 +26,8 @@ on:
         value: ${{ jobs.prepare.outputs.image_url }}
       image_full:
         value: ${{ jobs.prepare.outputs.image_full }}
+      built:
+        value: ${{ jobs.build.result != 'skipped' }}
 
   workflow_dispatch:
     inputs:
@@ -103,8 +105,12 @@ jobs:
     needs: prepare
     name: Re-tag existing Docker image
     runs-on: ubuntu-latest
+    continue-on-error: true
     environment: ${{ inputs.environment }}
     concurrency: build
+
+    outputs:
+      failed: ${{ steps.retag.outcome != 'success' }}
 
     steps:
     - name: Login to GitHub Container Registry
@@ -115,6 +121,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Push new tag
+      id: retag
       uses: akhilerm/tag-push-action@v2.0.0
       with:
         src: ${{ needs.prepare.outputs.image_url }}:commit-${{ github.sha }}
@@ -128,7 +135,7 @@ jobs:
     - retag
     name: Build and publish Docker image to registry
     runs-on: ubuntu-latest
-    if: always() && needs.retag.result == 'failure'
+    if: needs.retag.outputs.failed
     environment: ${{ inputs.environment }}
     concurrency: build
 
