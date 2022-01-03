@@ -25,6 +25,7 @@ jobs:
   prepare:
     name: Prepare deployment
     runs-on: ubuntu-latest
+
     outputs:
       version: ${{ steps.vars.outputs.version }}
 
