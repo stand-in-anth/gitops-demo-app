@@ -1,6 +1,10 @@
-name: Deploy to production
+name: Deploy to staging
 
 on:
+  push:
+    tags:
+    - v*
+
   workflow_dispatch:
     inputs:
       version:
@@ -14,7 +18,7 @@ on:
         type: string
 
 concurrency: 
-  group: production
+  group: staging
   cancel-in-progress: true
 
 jobs:
@@ -42,6 +46,6 @@ jobs:
     needs: prepare
     uses: au2001/gitops-demo-app/.github/workflows/build.yml@main
     with:
-      prefix: prd-
+      prefix: stg-
       version: ${{ needs.prepare.outputs.version }}
-      environment: Production
+      environment: Staging

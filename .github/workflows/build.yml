@@ -57,6 +57,8 @@ on:
         required: false
         type: string
 
+concurrency: build
+
 env:
   CONTAINER_REGISTRY: ghcr.io
 
