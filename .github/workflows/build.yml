@@ -110,7 +110,7 @@ jobs:
     environment: ${{ inputs.environment }}
 
     outputs:
-      failed: ${{ steps.retag.outcome != 'success' }}
+      outcome: ${{ steps.push.outcome }}
 
     steps:
     - name: Login to GitHub Container Registry
@@ -121,7 +121,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Push new tag
-      id: retag
+      id: push
       uses: akhilerm/tag-push-action@v2.0.0
       continue-on-error: true
       with:
@@ -136,7 +136,7 @@ jobs:
     - retag
     name: Build and publish Docker image to registry
     runs-on: ubuntu-latest
-    if: needs.retag.outputs.failed
+    if: needs.retag.outputs.outcome != 'success'
     environment: ${{ inputs.environment }}
 
     steps:
