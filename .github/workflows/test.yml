@@ -1,0 +1,26 @@
+name: Test
+
+on:
+  workflow_call:
+    inputs:
+      hello:
+        required: true
+        type: string
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    outputs:
+      hello: ${{ steps.echo.outputs.hello }}
+
+    steps:
+    - name: Echo input
+      id: echo
+      run: |
+        hello="${{ inputs.hello }}"
+        
+        echo "Hello, ${hello}!"
+
+        echo "::set-output name=hello::$hello"
