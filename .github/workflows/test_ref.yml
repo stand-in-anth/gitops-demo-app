@@ -3,6 +3,10 @@ name: Test ref
 on:
   workflow_dispatch:
 
+concurrency:
+  group: development
+  cancel-in-progress: true
+
 jobs:
   build:
     uses: au2001/gitops-demo-app/.github/workflows/test.yml@main
