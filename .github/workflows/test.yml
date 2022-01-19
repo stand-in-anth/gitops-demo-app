@@ -24,3 +24,8 @@ jobs:
         echo "Hello, ${hello}!"
 
         echo "::set-output name=hello::$hello"
+
+    - name: Fail
+      continue-on-error: true
+      run: |
+        exit 1
