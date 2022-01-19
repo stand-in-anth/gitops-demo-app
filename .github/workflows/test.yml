@@ -29,3 +29,12 @@ jobs:
       continue-on-error: true
       run: |
         exit 1
+
+  skip:
+    name: Skip
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Skip
+      if: false
+      run: ""
