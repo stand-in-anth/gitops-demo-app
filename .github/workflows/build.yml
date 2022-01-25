@@ -26,8 +26,8 @@ on:
         value: ${{ jobs.prepare.outputs.image_url }}
       image_full:
         value: ${{ jobs.prepare.outputs.image_full }}
-      built:
-        value: ${{ jobs.build.result != 'skipped' }}
+      #built:
+       # value: ${{ jobs.build.result != 'skipped' }}
 
   workflow_dispatch:
     inputs:
@@ -62,7 +62,7 @@ on:
 env:
   CONTAINER_REGISTRY: ghcr.io
 
-#concurrency: build
+concurrency: build
 
 jobs:
   prepare:
