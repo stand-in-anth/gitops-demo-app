@@ -130,7 +130,7 @@ jobs:
           ${{ needs.prepare.outputs.image_url }}:${{ inputs.prefix }}latest
           ${{ needs.prepare.outputs.image_full }}
 
-  build:
+  ending:
     needs:
     - prepare
     - retag
