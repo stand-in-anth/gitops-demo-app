@@ -139,25 +139,39 @@ jobs:
     - retag
     name: Build and publish Docker image to registry
     runs-on: ubuntu-latest
-    if: needs.retag.outputs.status != 'success' && false
-    environment: ${{ inputs.environment }}
+    #if: needs.retag.outputs.status != 'success' && false
+    #environment: ${{ inputs.environment }}
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+    - name: Run a one-line script
+      run: echo Running step!
+    #- name: Checkout
+     # uses: actions/checkout@v2
 
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
-      with:
-        registry: ${{ env.CONTAINER_REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+   # - name: Login to GitHub Container Registry
+    #  uses: docker/login-action@v1
+     # with:
+      #  registry: ${{ env.CONTAINER_REGISTRY }}
+       # username: ${{ github.actor }}
+        #password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and push image
-      uses: docker/build-push-action@v2
-      with:
-        push: true
-        tags: |
-          ${{ needs.prepare.outputs.image_url }}:${{ inputs.prefix }}latest
-          ${{ needs.prepare.outputs.image_url }}:commit-${{ github.sha }}
-          ${{ needs.prepare.outputs.image_full }}
+    #- name: Build and push image
+     # uses: docker/build-push-action@v2
+      #with:
+       # push: true
+        #tags: |
+         # ${{ needs.prepare.outputs.image_url }}:${{ inputs.prefix }}latest
+          #${{ needs.prepare.outputs.image_url }}:commit-${{ github.sha }}
+          #${{ needs.prepare.outputs.image_full }}
+
+  echoOut:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - run: |
+        echo ${{ outputs.version.value }}
+        echo ${{ outputs.version_full.value }}
+        echo ${{ outputs.image_name.value }}
+        echo ${{ outputs.image_url.value }}
+        echo ${{ outputs.image_full.value }}
+        echo ${{ outputs.built.value }}
