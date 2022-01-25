@@ -118,7 +118,7 @@ jobs:
       with:
         registry: ${{ env.CONTAINER_REGISTRY }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ secrets.PAT }}
 
     - name: Push new tag
       id: push
@@ -148,7 +148,7 @@ jobs:
       with:
         registry: ${{ env.CONTAINER_REGISTRY }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ secrets.PAT }}
 
     - name: Build and push image
       uses: docker/build-push-action@v2
