@@ -62,7 +62,7 @@ on:
 env:
   CONTAINER_REGISTRY: ghcr.io
 
-concurrency: build
+#concurrency: build
 
 jobs:
   prepare:
@@ -136,7 +136,7 @@ jobs:
     - retag
     name: Build and publish Docker image to registry
     runs-on: ubuntu-latest
-    if: needs.retag.outputs.status != 'success'
+    if: needs.retag.outputs.status != 'success' && false
     environment: ${{ inputs.environment }}
 
     steps:
