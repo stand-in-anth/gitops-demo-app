@@ -15,19 +15,19 @@ on:
       environment:
         required: false
         type: string
-    outputs:
-      version:
-        value: ${{ jobs.prepare.outputs.version }}
-      version_full:
-        value: ${{ jobs.prepare.outputs.version_full }}
-      image_name:
-        value: ${{ jobs.prepare.outputs.image_name }}
-      image_url:
-        value: ${{ jobs.prepare.outputs.image_url }}
-      image_full:
-        value: ${{ jobs.prepare.outputs.image_full }}
-      built:
-        value: ${{ jobs.build.result != 'skipped' }}
+    #outputs:
+     # version:
+      #  value: ${{ jobs.prepare.outputs.version }}
+      #version_full:
+       # value: ${{ jobs.prepare.outputs.version_full }}
+      #image_name:
+       # value: ${{ jobs.prepare.outputs.image_name }}
+      #image_url:
+       # value: ${{ jobs.prepare.outputs.image_url }}
+      #image_full:
+       # value: ${{ jobs.prepare.outputs.image_full }}
+      #built:
+       # value: ${{ jobs.build.result != 'skipped' }}
 
   workflow_dispatch:
     inputs:
@@ -69,39 +69,41 @@ jobs:
     name: Prepare build
     runs-on: ubuntu-latest
 
-    outputs:
-      version: ${{ steps.vars.outputs.version }}
-      version_full: ${{ steps.vars.outputs.version_full }}
-      image_name: ${{ steps.vars.outputs.image_name }}
-      image_url: ${{ steps.vars.outputs.image_url }}
-      image_full: ${{ steps.vars.outputs.image_full }}
+    #outputs:
+     # version: ${{ steps.vars.outputs.version }}
+      #version_full: ${{ steps.vars.outputs.version_full }}
+      #image_name: ${{ steps.vars.outputs.image_name }}
+      #image_url: ${{ steps.vars.outputs.image_url }}
+      #image_full: ${{ steps.vars.outputs.image_full }}
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Run a one-line script
+        run: echo Running step!
+    #- name: Checkout
+     # uses: actions/checkout@v2
 
-    - name: Compute variables
-      id: vars
-      run: |
-        if [ -z "${{ inputs.version }}" ]; then
-          branch=`git branch --show-current`
-          sha_short=`git rev-parse --short HEAD`
-          version="$branch-$sha_short"
-        else
-          version="${{ inputs.version }}"
-        fi
+    #- name: Compute variables
+     # id: vars
+      #run: |
+       # if [ -z "${{ inputs.version }}" ]; then
+        #  branch=`git branch --show-current`
+         # sha_short=`git rev-parse --short HEAD`
+          #version="$branch-$sha_short"
+       # else
+        #  version="${{ inputs.version }}"
+        #fi
 
-        version_full="${{ inputs.prefix }}$version-$(date +%s)"
+        #version_full="${{ inputs.prefix }}$version-$(date +%s)"
 
-        image_name="${{ inputs.image || github.repository }}"
-        image_url="${{ env.CONTAINER_REGISTRY }}/${{ inputs.image || github.repository }}"
-        image_full="$image_url:$version_full"
+        #image_name="${{ inputs.image || github.repository }}"
+        #image_url="${{ env.CONTAINER_REGISTRY }}/${{ inputs.image || github.repository }}"
+        #image_full="$image_url:$version_full"
 
-        echo "::set-output name=version::$version"
-        echo "::set-output name=version_full::$version_full"
-        echo "::set-output name=image_name::$image_name"
-        echo "::set-output name=image_url::$image_url"
-        echo "::set-output name=image_full::$image_full"
+        #echo "::set-output name=version::$version"
+        #echo "::set-output name=version_full::$version_full"
+        #echo "::set-output name=image_name::$image_name"
+        #echo "::set-output name=image_url::$image_url"
+        #echo "::set-output name=image_full::$image_full"
 
   retag:
     needs: prepare
