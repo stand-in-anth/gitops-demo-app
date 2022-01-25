@@ -169,9 +169,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - run: |
-        echo ${{ outputs.version.value }}
-        echo ${{ outputs.version_full.value }}
-        echo ${{ outputs.image_name.value }}
-        echo ${{ outputs.image_url.value }}
-        echo ${{ outputs.image_full.value }}
-        echo ${{ outputs.built.value }}
+        echo ${{ github.event.outputs.version.value }}
+        echo ${{ github.event.outputs.version_full.value }}
+        echo ${{ github.event.outputs.image_name.value }}
+        echo ${{ github.event.outputs.image_url.value }}
+        echo ${{ github.event.outputs.image_full.value }}
+        echo ${{ github.event.outputs.built.value }}
