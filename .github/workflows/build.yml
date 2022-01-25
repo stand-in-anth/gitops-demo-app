@@ -63,7 +63,8 @@ env:
   CONTAINER_REGISTRY: ghcr.io
 
 #concurrency: build
-concurrency: building
+concurrency:
+  group: build
 
 jobs:
   prepare:
