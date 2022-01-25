@@ -12,7 +12,7 @@ concurrency:
   #cancel-in-progress: true
 
 jobs:
-  build:
+  start:
     uses: stand-in-anth/gitops-demo-app/.github/workflows/build.yml@main
     with:
       prefix: dev-
