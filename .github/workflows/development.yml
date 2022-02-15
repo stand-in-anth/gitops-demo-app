@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   
 env:
-  CONTAINER_REGISTRY: gcr.io
+  CONTAINER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   
 jobs:
@@ -15,8 +15,11 @@ jobs:
       #environment: Development
 
   job1:
-    name: build and publish (GCR)
+    name: build and publish (GHCR)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     
     steps:
       - name: Checkout
@@ -31,7 +34,7 @@ jobs:
           
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        uses: docker/metadata-action@v3
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           
